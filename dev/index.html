@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>SSE Widget Lab</title>
+  <!-- bring in the base class -->
+  <!-- The /src alias is configured in vite.config.js -->
+  <!-- <script type="module" src="./src/sse-base-widget.js"></script> -->
+  <script type="module" src="./src/test-widget.js"></script>
+</head>
+<body>
+  <!-- <sse-base-widget
+    sse-url="http://localhost:4000/stream"
+    debug
+    animate-updates
+  ></sse-base-widget> -->
+  <clock-widget
+    sse-url="http://localhost:4000/stream"
+    debug
+    animate-updates
+  ></clock-widget>
+</body>
+</html>
