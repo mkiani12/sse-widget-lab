@@ -127,7 +127,7 @@ export class ClockWidget extends SSEBaseWidget {
 
       /* Return HTML with separate spans for time and date */
       return {
-        data: `<span class="time">${timeStr}</span><br/><span class="date">${dateStr}</span>`,
+        html: `<span class="time">${timeStr}</span><br/><span class="date">${dateStr}</span>`,
       };
     } catch (err) {
       // log for debugging; re-throw so base widget shows error state

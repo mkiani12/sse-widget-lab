@@ -61,7 +61,6 @@ export class SSEBaseWidget extends HTMLElement {
     "placeholder-text",
     "error-message",
     "debug",
-    "animate-updates",
   ];
 
   /* ===== shared stylesheet ===== */
@@ -114,7 +113,6 @@ export class SSEBaseWidget extends HTMLElement {
       placeholderText: "Waiting for data…",
       errorMessage: "Connection error. Retrying…",
       debug: false,
-      animateUpdates: false,
     });
   }
 
@@ -158,13 +156,6 @@ export class SSEBaseWidget extends HTMLElement {
   }
   set debug(v) {
     this.#boolAttr("debug", v);
-  }
-
-  get animateUpdates() {
-    return this.hasAttribute("animate-updates");
-  }
-  set animateUpdates(v) {
-    this.#boolAttr("animate-updates", v);
   }
 
   // numbers
@@ -239,10 +230,6 @@ export class SSEBaseWidget extends HTMLElement {
 
       case "debug":
         this._cfg.debug = this.debug;
-        break;
-
-      case "animate-updates":
-        this._cfg.animateUpdates = this.animateUpdates;
         break;
 
       case "reconnect-delay":
@@ -386,20 +373,21 @@ export class SSEBaseWidget extends HTMLElement {
     this.#renderText(this._cfg.placeholderText, state);
   }
 
+  /**
+   * Render new HTML into `.data` with no animation whatsoever.
+   * This guarantees zero flicker / blink.
+   */
   #renderText(html, cls = "data") {
     if (!this._dataEl) return;
 
-    if (this._cfg.animateUpdates) {
-      this._dataEl.style.opacity = "0";
-      setTimeout(() => {
-        this._dataEl.innerHTML = html;
-        this._dataEl.className = `data status-${cls}`;
-        this._dataEl.style.opacity = "1";
-      });
-    } else {
-      this._dataEl.innerHTML = html;
-      this._dataEl.className = `data status-${cls}`;
-    }
+    const el = /** @type {HTMLDivElement} */ (this._dataEl);
+
+    // Ensure no leftover opacity from earlier animated versions
+    el.style.opacity = "";
+
+    // Direct swap
+    el.innerHTML = html;
+    el.className = `data status-${cls}`;
   }
 
   /* ---------- overridable hooks ---------- */
@@ -419,11 +407,24 @@ export class SSEBaseWidget extends HTMLElement {
   }
 
   /**
-   * Default data renderer — subclasses should override.
-   * @param {{data:string}} param0
+   * Internal data handler — **do not override**.
+   * Subclasses should only override `processData`.
+   * @param {{html?:string,text?:string,data?:string}} payload
    */
-  #handleData({ data }) {
-    this.#renderText(`<pre>${this.#escape(data)}</pre>`);
+  #handleData(payload) {
+    const { html, text, data } = payload;
+
+    /* secure-by-default: only use raw html if dev explicitly returned it */
+    let content;
+    if (html != null) {
+      content = html; /* trusted by developer */
+    } else {
+      /* text | data ⇒ escape to prevent XSS */
+      const raw = text ?? data ?? "";
+      content = `<pre>${this.#escape(raw)}</pre>`;
+    }
+
+    this.#renderText(content, "connected");
   }
 
   /* ---------- utilities ---------- */
