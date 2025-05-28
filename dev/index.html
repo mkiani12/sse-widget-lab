@@ -1,26 +1,30 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="fa" dir="rtl"> <head>
   <meta charset="utf-8" />
-  <title>SSE Widget Lab</title>
-  <!-- bring in the base class -->
-  <!-- The /src alias is configured in vite.config.js -->
-  <!-- <script type="module" src="./src/sse-base-widget.js"></script> -->
+  <title>SSE Crypto Widget</title>
   <script type="module" src="./src/test-widget.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    /* You might want to add some global styles or reset for better presentation */
+  </style>
 </head>
 <body>
-  <!-- <sse-base-widget
+  <crypto-price-widget
     sse-url="http://localhost:4000/stream"
     debug
-    animate-updates
-  ></sse-base-widget> -->
-  <clock-widget
-    sse-url="http://localhost:4000/stream"
-    debug
-    animate-updates
+    placeholder-text="در حال بارگذاری قیمت..."
+    error-message="خطا در اتصال. در حال تلاش مجدد..."
   >
-  <span slot="header">Live Orders</span>
-  <div slot="footer">Auto-updated</div>
-  </clock-widget>
+    </crypto-price-widget>
 </body>
 </html>

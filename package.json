@@ -2,6 +2,7 @@
   "name": "sse-widget-lab",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "serve:sse": "node dev/sse-server.js",
     "dev":       "vite",
