@@ -31,6 +31,11 @@ export class CryptoPriceWidget extends SSEBaseWidget {
   constructor() {
     super();
     this._hasCryptoStyle = false; // Flag to ensure styles are injected once
+
+    // Set default SSE URL if not provided via attribute
+    if (!this.hasAttribute("sse-url")) {
+      this.sseUrl = "http://localhost:4000/stream";
+    }
   }
 
   connectedCallback() {
@@ -39,13 +44,13 @@ export class CryptoPriceWidget extends SSEBaseWidget {
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
 
         :host {
-          border: none !important;
-          border-radius: 12px !important;
-          background: #181A2A !important; /* Dark background like the image */
+          border: 1px solid #6D7385 !important;
+          border-radius: 8px !important;
+          background: radial-gradient(circle at 50% -30%, #1D236C 0%, #000212 100%) !important;
           box-shadow: 0 4px 8px rgba(0,0,0,.2), 0 10px 20px rgba(0,0,0,.25) !important;
           overflow: hidden !important;
-          min-width: 280px !important;
-          padding: 20px !important;
+          min-width: 302px !important;
+          padding: 12px 24px !important;
           font-family: 'Vazirmatn', system-ui, sans-serif !important;
           color: #EAEAEA !important;
         }
@@ -62,7 +67,7 @@ export class CryptoPriceWidget extends SSEBaseWidget {
           color: #EAEAEA !important; /* Default text color for children */
           display: flex;
           flex-direction: column;
-          align-items: center;
+          align-items: flex-start;
           gap: 8px; /* Spacing between elements */
         }
 
@@ -72,46 +77,59 @@ export class CryptoPriceWidget extends SSEBaseWidget {
           justify-content: center; /* Centered header */
           gap: 10px;
           margin-bottom: 10px;
+          margin-left: auto;
+          margin-right: auto;
         }
         .coin-logo {
-          width: 32px;
-          height: 32px;
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
         }
         .coin-name-container {
           display: flex;
-          flex-direction: column; /* Stack name and symbol */
-          align-items: flex-start; /* Align text to the start (left for LTR, right for RTL) */
+          align-items: center; /* Align text to the start (left for LTR, right for RTL) */
           text-align: right; /* For Persian text */
         }
         .coin-name {
-          font-size: 1.3rem; /* Adjusted size */
+          font-size: 12px; /* Adjusted size */
           font-weight: 700;
           color: #FFFFFF;
         }
         .coin-symbol {
-          font-size: 0.9rem; /* Adjusted size */
-          color: #AAAAAA;
+          font-size: 10px; /* Adjusted size */
+          color: #BFBFBF;
           text-transform: uppercase;
+          margin-right: 8px; /* Space between name and symbol */
+        }
+
+        .price-change-container {
+          text-align: right;
+          display: flex;
+          align-items: center; /* Center the price change */
+          margin-bottom: 8px;
+        }
+
+        .price-change-label{
+          font-size: 12px; /* Adjusted size */
+          color: #FFF;
         }
 
         .price-change {
-          font-size: 1rem; /* Adjusted size */
+          font-size: 12px; /* Adjusted size */
           font-weight: 700;
-          padding: 2px 8px;
           border-radius: 4px;
-          margin-bottom: 4px;
+          margin-right: 8px;
           direction: ltr; /* Keep percentage and arrow LTR */
         }
         .price-change.positive {
-          color: #2ECC71; /* Green for positive */
+          color: #00A66A; /* Green for positive */
         }
         .price-change.negative {
           color: #E74C3C; /* Red for negative */
         }
 
         .main-price {
-          font-size: 2.6rem; /* Adjusted size */
+          font-size: 24px; /* Adjusted size */
           font-weight: 700;
           color: #FFFFFF;
           line-height: 1.1;
@@ -119,9 +137,8 @@ export class CryptoPriceWidget extends SSEBaseWidget {
         }
 
         .secondary-price {
-          font-size: 0.95rem; /* Adjusted size */
-          color: #B0B0B0;
-          margin-bottom: 10px;
+          font-size: 14px; /* Adjusted size */
+          color: #fff;
         }
 
         .widget-footer {
@@ -130,7 +147,8 @@ export class CryptoPriceWidget extends SSEBaseWidget {
           justify-content: center;
           gap: 8px;
           margin-top: 10px;
-          opacity: 0.8;
+          margin-left: auto;
+          margin-right: auto;
         }
         .footer-logo {
           width: 20px; /* Adjusted size */
@@ -188,7 +206,6 @@ export class CryptoPriceWidget extends SSEBaseWidget {
         mainPriceUsd = 0,
         secondaryPriceToman = 0,
         secondaryCurrencySymbol = "",
-        footerText = "",
         footerLogoUrl = "",
       } = payload;
 
@@ -198,18 +215,21 @@ export class CryptoPriceWidget extends SSEBaseWidget {
 
       const html = `
         <div class="crypto-header">
+          <img src="${coinLogoUrl}" alt="${coinSymbol} logo" class="coin-logo">
           <div class="coin-name-container">
             <span class="coin-name">${coinName}</span>
             <span class="coin-symbol">${coinSymbol}</span>
           </div>
-          <img src="${coinLogoUrl}" alt="${coinSymbol} logo" class="coin-logo">
         </div>
-        <div class="price-change ${priceChangeClass}">
-          ${priceChangeArrow} ${toPersianNum(Math.abs(priceChangeNum), {
+        <div class="price-change-container">
+          <span class="price-change-label">قیمت بیت کوین</span>
+          <div class="price-change ${priceChangeClass}">
+            ${priceChangeArrow} ${toPersianNum(Math.abs(priceChangeNum), {
         style: "percent",
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}
+          </div>
         </div>
         <div class="main-price">$${toPersianNum(mainPriceUsd, {
           minimumFractionDigits: 2,
@@ -220,7 +240,7 @@ export class CryptoPriceWidget extends SSEBaseWidget {
         )} ${secondaryCurrencySymbol}</div>
         <div class="widget-footer">
           <img src="${footerLogoUrl}" alt="Footer logo" class="footer-logo">
-          <span class="footer-text">${footerText}</span>
+          <span class="footer-text">کیف پول من</span>
         </div>
       `;
       return { html };

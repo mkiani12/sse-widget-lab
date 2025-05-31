@@ -19,6 +19,24 @@ function corsHeaders(origin = "*") {
   };
 }
 
+function createMockAndSend(res) {
+  const priceChange = (Math.random() * 1 - 0.5).toFixed(4); // Random percentage change between -0.5 and +0.5
+  const mainPrice = 93000 + Math.random() * 1000 - 500; // Base price around 93,340
+  const secondaryPriceFactor = 79000 + Math.random() * 1000; // For Toman conversion
+
+  const mockData = {
+    coinName: "بیت کوین",
+    coinSymbol: "BTC",
+    coinLogoUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png", // Bitcoin logo
+    priceChangePercent: priceChange,
+    mainPriceUsd: mainPrice.toFixed(2),
+    secondaryPriceToman: (mainPrice * secondaryPriceFactor).toFixed(0),
+    secondaryCurrencySymbol: "تومان",
+    footerLogoUrl: KIFPOOL_LOGO_DATA_URL,
+  };
+  sendEvent(res, mockData);
+}
+
 // A simple Base64 encoder for the SVG footer logo (Node.js environment)
 function base64Encode(str) {
   return Buffer.from(str).toString("base64");
@@ -57,24 +75,14 @@ createServer((req, res) => {
 
     res.write(": connected\n\n"); // [cite: 124]
 
-    const interval = setInterval(() => {
-      const priceChange = (Math.random() * 1 - 0.5).toFixed(4); // Random percentage change between -0.5 and +0.5
-      const mainPrice = 93000 + Math.random() * 1000 - 500; // Base price around 93,340
-      const secondaryPriceFactor = 79000 + Math.random() * 1000; // For Toman conversion
+    setTimeout(() => {
+      // [cite: 124]
+      console.log("Client connected, starting stream.");
+      createMockAndSend(res); // Send initial data
+    }, 1000); // Initial delay of 1 second
 
-      const mockData = {
-        coinName: "بیت کوین",
-        coinSymbol: "BTC",
-        coinLogoUrl:
-          "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png", // Bitcoin logo
-        priceChangePercent: priceChange,
-        mainPriceUsd: mainPrice.toFixed(2),
-        secondaryPriceToman: (mainPrice * secondaryPriceFactor).toFixed(0),
-        secondaryCurrencySymbol: "تومان",
-        footerText: "کیف پول من",
-        footerLogoUrl: KIFPOOL_LOGO_DATA_URL,
-      };
-      sendEvent(res, mockData);
+    const interval = setInterval(() => {
+      createMockAndSend(res);
     }, 2000); // Send data every 2 seconds
 
     req.on("close", () => {
