@@ -3,6 +3,31 @@ import { URL } from "node:url"; // [cite: 120]
 
 const PORT = 4000; // [cite: 120]
 
+// ──────────────────────────  coin presets  ──────────────────────────
+// Extend or modify this list to add more coins with their Persian names,
+// symbols, logo URLs and an approximate USD base price used for the mock.
+// Real-world usage would source this from an API/db instead.
+const COINS = {
+  BTC: {
+    coinName: "بیت کوین",
+    coinSymbol: "BTC",
+    coinLogoUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png",
+    basePrice: 93000,
+  },
+  ETH: {
+    coinName: "اتریوم",
+    coinSymbol: "ETH",
+    coinLogoUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png",
+    basePrice: 4800,
+  },
+  DOGE: {
+    coinName: "دوج کوین",
+    coinSymbol: "DOGE",
+    coinLogoUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/74.png",
+    basePrice: 0.2,
+  },
+};
+
 // Helper function to send SSE events [cite: 121]
 function sendEvent(res, data, event = "message") {
   // [cite: 121]
@@ -19,15 +44,24 @@ function corsHeaders(origin = "*") {
   };
 }
 
-function createMockAndSend(res) {
-  const priceChange = (Math.random() * 1 - 0.5).toFixed(4); // Random percentage change between -0.5 and +0.5
-  const mainPrice = 93000 + Math.random() * 1000 - 500; // Base price around 93,340
-  const secondaryPriceFactor = 79000 + Math.random() * 1000; // For Toman conversion
+function createMockAndSend(res, coinKey = "BTC") {
+  const coin = COINS[coinKey] || COINS.BTC;
+
+  // Random percentage change between -0.5 and +0.5
+  const priceChange = (Math.random() - 0.5).toFixed(4);
+
+  // Randomize around the coin's base price (±1%)
+  const mainPrice =
+    coin.basePrice * (1 + (Math.random() * 2 - 1) * 0.01);
+
+  // Very naive conversion to Iranian Toman just for demo (1 USD ≈ 50k Toman)
+  const TOMAN_PER_USD = 50000;
+  const secondaryPriceFactor = TOMAN_PER_USD * (1 + Math.random() * 0.02);
 
   const mockData = {
-    coinName: "بیت کوین",
-    coinSymbol: "BTC",
-    coinLogoUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png", // Bitcoin logo
+    coinName: coin.coinName,
+    coinSymbol: coin.coinSymbol,
+    coinLogoUrl: coin.coinLogoUrl,
     priceChangePercent: priceChange,
     mainPriceUsd: mainPrice.toFixed(2),
     secondaryPriceToman: (mainPrice * secondaryPriceFactor).toFixed(0),
@@ -54,7 +88,7 @@ const KIFPOOL_LOGO_DATA_URL = `data:image/svg+xml;base64,${base64Encode(
 
 createServer((req, res) => {
   // [cite: 123]
-  const { pathname } = new URL(req.url, `http://${req.headers.host}`); // [cite: 123]
+  const { pathname, searchParams } = new URL(req.url, `http://${req.headers.host}`); // [cite: 123]
 
   if (req.method === "OPTIONS") {
     // [cite: 123]
@@ -75,14 +109,16 @@ createServer((req, res) => {
 
     res.write(": connected\n\n"); // [cite: 124]
 
+    // Determine which coin to stream based on URL param (?symbol=BTC)
+    const symbolParam = searchParams.get("symbol")?.toUpperCase() || "BTC";
+
     setTimeout(() => {
-      // [cite: 124]
-      console.log("Client connected, starting stream.");
-      createMockAndSend(res); // Send initial data
+      console.log(`Client connected, starting ${symbolParam} stream.`);
+      createMockAndSend(res, symbolParam); // Send initial data
     }, 1000); // Initial delay of 1 second
 
     const interval = setInterval(() => {
-      createMockAndSend(res);
+      createMockAndSend(res, symbolParam);
     }, 2000); // Send data every 2 seconds
 
     req.on("close", () => {
@@ -103,5 +139,5 @@ createServer((req, res) => {
   PORT,
   () =>
     // [cite: 125]
-    console.log(`🟢 SSE crypto stream ready → http://localhost:${PORT}/stream`) // [cite: 125]
+    console.log(`🟢 SSE crypto stream ready → http://localhost:${PORT}/stream?symbol=BTC (or ETH, DOGE, ...)`) // [cite: 125]
 );

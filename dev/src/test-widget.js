@@ -32,13 +32,19 @@ export class CryptoPriceWidget extends SSEBaseWidget {
     super();
     this._hasCryptoStyle = false; // Flag to ensure styles are injected once
 
-    // Set default SSE URL if not provided via attribute
-    if (!this.hasAttribute("sse-url")) {
-      this.sseUrl = "http://localhost:4000/stream";
-    }
+    // Base SSE endpoint (without query params). If developer does not specify
+    // an explicit `sse-url` attribute, the widget will automatically append
+    // `?symbol=<coin>` using the `coin` attribute (defaults to BTC).
+    this._baseSseUrl = "http://localhost:4000/stream";
   }
 
   connectedCallback() {
+    // Compose default sse-url if none was provided
+    if (!this.hasAttribute("sse-url")) {
+      const symbol = (this.getAttribute("coin") || "BTC").toUpperCase();
+      this.sseUrl = `${this._baseSseUrl}?symbol=${symbol}`;
+    }
+
     if (!this._hasCryptoStyle) {
       const css = /* css */ `
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
@@ -222,7 +228,7 @@ export class CryptoPriceWidget extends SSEBaseWidget {
           </div>
         </div>
         <div class="price-change-container">
-          <span class="price-change-label">قیمت بیت کوین</span>
+          <span class="price-change-label">قیمت ${coinName}</span>
           <div class="price-change ${priceChangeClass}">
             ${priceChangeArrow} ${toPersianNum(Math.abs(priceChangeNum), {
         style: "percent",
